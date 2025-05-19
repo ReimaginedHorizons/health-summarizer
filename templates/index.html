@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-100 text-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <title>Health & Longevity Updates</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="max-w-2xl mx-auto py-8">
+    <h1 class="text-3xl font-bold mb-6 text-center">🧬 Health & Longevity Insights</h1>
+    {% for article in articles %}
+        <div class="bg-white p-4 rounded-xl shadow mb-4">
+            <a href="{{ article.link }}" class="text-xl font-semibold hover:underline" target="_blank">
+                {{ article.title }}
+            </a>
+            <p class="mt-2 text-gray-700">{{ article.summary }}</p>
+        </div>
+    {% endfor %}
+</body>
+</html>
