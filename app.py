@@ -1,55 +1,56 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import feedparser
 import requests
+import os
 
 app = Flask(__name__)
 
-DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
-DEEPSEEK_API_KEY = "sk-c364a35a252d4281a9b99e7659b82693"  # Put your key here
+# Load your API key securely from environment variables
+API_KEY = os.environ.get("DEEPSEEK_API_KEY")  # ✅ Set this in Render.com
 
-# Use a health-focused RSS feed (or multiple)
+# Example RSS feeds for health & longevity articles
 RSS_FEEDS = [
-    "https://www.medicalnewstoday.com/rss", 
-    "https://www.healthline.com/rss",
+    "https://www.medicalnewstoday.com/rss",
+    "https://www.sciencedaily.com/rss/health_medicine.xml",
     "https://www.nih.gov/news-events/news-releases/rss.xml"
 ]
 
-def get_articles():
-    entries = []
-    for feed in RSS_FEEDS:
-        parsed = feedparser.parse(feed)
-        entries.extend(parsed.entries[:3])  # Limit per feed
-    return entries[:5]  # Top 5 overall
+def fetch_articles():
+    articles = []
+    for feed_url in RSS_FEEDS:
+        feed = feedparser.parse(feed_url)
+        for entry in feed.entries[:5]:  # Limit to 5 articles per feed
+            articles.append({
+                'title': entry.title,
+                'link': entry.link,
+                'summary': summarize(entry.summary)
+            })
+    return articles
 
-def summarize_article(text):
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json"
+def summarize(text):
+    # This function would use your AI API (like DeepSeek) to summarize
+    if not API_KEY:
+        return "No API key provided."
+
+    api_url = "https://api.deepseek.com/summarize"  # Replace with actual endpoint
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    payload = {
+        "text": text,
+        "length": "short"
     }
-    data = {
-        "model": "deepseek-chat",
-        "messages": [
-            {"role": "user", "content": f"Summarize this for a beginner in 3 sentences:\n\n{text}"}
-        ]
-    }
+
     try:
-        response = requests.post(DEEPSEEK_API_URL, headers=headers, json=data, timeout=20)
-        return response.json()['choices'][0]['message']['content']
+        response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+        summary = response.json().get("summary", "No summary returned.")
+        return summary
     except Exception as e:
-        return "Summary failed. Try again later."
+        return f"Summary error: {e}"
 
 @app.route("/")
 def index():
-    articles = get_articles()
-    summarized = []
-    for art in articles:
-        summary = summarize_article(art.get("summary", art.get("description", "")))
-        summarized.append({
-            "title": art.title,
-            "link": art.link,
-            "summary": summary
-        })
-    return render_template("index.html", articles=summarized)
+    articles = fetch_articles()
+    return render_template("index.html", articles=articles)
 
 if __name__ == "__main__":
     app.run(debug=True)
