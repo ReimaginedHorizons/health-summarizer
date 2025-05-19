@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
-DEEPSEEK_API_KEY = "your_deepseek_api_key_here"  # Put your key here
+DEEPSEEK_API_KEY = "sk-c364a35a252d4281a9b99e7659b82693"  # Put your key here
 
 # Use a health-focused RSS feed (or multiple)
 RSS_FEEDS = [
